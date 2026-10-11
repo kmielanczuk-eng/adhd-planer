@@ -204,11 +204,19 @@ function TopBar({ section }: { section: string }) {
     <div className="sticky top-0 z-30 bg-bg/85 backdrop-blur safe-top">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 h-14 flex items-center justify-between gap-2">
         <button type="button" onClick={() => navigate('/dzis')} className="lg:invisible font-bold text-lg flex items-center gap-2 min-h-10" aria-label="Ogarniacz — strona główna">
-          <Logo /> Ogarniacz
+          <Logo /> <span className="hidden min-[400px]:inline">Ogarniacz</span>
         </button>
         <div className="flex items-center gap-1">
           <SyncDot />
           <XpChip />
+          <button
+            type="button"
+            onClick={() => navigate('/przerwa')}
+            className={`lg:hidden min-w-10 min-h-10 grid place-items-center rounded-full hover:bg-surface-2 ${section === 'przerwa' ? 'text-accent' : 'text-muted'}`}
+            aria-label="Przerwa — menu dopaminowe"
+          >
+            <Icon name="coffee" size={20} />
+          </button>
           <button
             type="button"
             onClick={() => navigate('/ustawienia')}

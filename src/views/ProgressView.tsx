@@ -129,7 +129,7 @@ export function ProgressView() {
 function Jar({ events }: { events: XpEvent[] }) {
   const tokens = events.slice(0, 60)
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center mb-8">
       <div className="relative w-48 h-56" aria-label={`Słoik: ${events.length} żetonów`} role="img">
         <svg viewBox="0 0 200 230" className="absolute inset-0 w-full h-full">
           <rect x="55" y="6" width="90" height="18" rx="6" fill="var(--sun-soft)" stroke="var(--sun)" strokeWidth="2" />

@@ -23,7 +23,7 @@ export function InboxView() {
             {items.length ? 'Zdecyduj szybko: zadanie, notatka czy kosz. Nie musisz wszystkiego naraz.' : 'Tu lądują wszystkie zrzuty myśli.'}
           </p>
         </div>
-        <Button variant="primary" icon="plus" onClick={openDump} className="shrink-0">
+        <Button variant="primary" icon="plus" onClick={openDump} className="shrink-0 hidden sm:inline-flex">
           <span className="hidden sm:inline">Zrzut myśli</span>
         </Button>
       </header>

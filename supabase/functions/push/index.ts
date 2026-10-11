@@ -80,33 +80,27 @@ async function sendTo(subs: SubRow[], payload: Record<string, unknown>) {
 }
 
 async function runCron() {
-  const now = new Date()
-  const since = new Date(now.getTime() - 6 * 3600_000) // starsze niż 6 h już nie wysyłamy
-  const { data: due, error } = await admin
-    .from('records')
-    .select('user_id, id, data')
-    .eq('tbl', 'tasks')
-    .eq('deleted', false)
-    .lte('data->>remindAt', now.toISOString())
-    .gte('data->>remindAt', since.toISOString())
-    .neq('data->>status', 'done')
-    .limit(200)
+  const { data: due, error } = await admin.rpc('due_reminders', { max_rows: 200 })
   if (error) throw error
   let sent = 0
-  for (const row of due ?? []) {
-    const remindAt = (row.data as { remindAt: string }).remindAt
-    // „Zaklepujemy” wysyłkę — klucz główny (record_id, remind_at) gwarantuje jedną wysyłkę.
-    const { error: claimErr } = await admin.from('reminders_sent').insert({ user_id: row.user_id, record_id: row.id, remind_at: remindAt })
+  for (const row of (due ?? []) as Array<{ user_id: string; id: string; title: string | null; remind_at: string }>) {
+    // „Zaklepujemy” wysyłkę — klucz główny (record_id, remind_at) chroni przed podwójnym wysłaniem przy nakładających się wywołaniach.
+    const { error: claimErr } = await admin.from('reminders_sent').insert({ user_id: row.user_id, record_id: row.id, remind_at: row.remind_at })
     if (claimErr) continue
     const { data: subs } = await admin.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth').eq('user_id', row.user_id)
-    if (!subs?.length) continue
-    const title = String((row.data as { title?: string }).title || 'Zadanie')
-    sent += await sendTo(subs as SubRow[], {
-      title: '🔔 ' + title,
-      body: 'Masz chwilę? Wystarczy zacząć — nawet na 5 minut.',
-      taskId: row.id,
-      tag: `task-${row.id}`,
-    })
+    const n = subs?.length
+      ? await sendTo(subs as SubRow[], {
+          title: '🔔 ' + (row.title || 'Zadanie'),
+          body: 'Masz chwilę? Wystarczy zacząć — nawet na 5 minut.',
+          taskId: row.id,
+          tag: `task-${row.id}`,
+        })
+      : 0
+    if (n === 0) {
+      // Nie udało się (albo brak urządzeń) — zwalniamy blokadę, spróbujemy w kolejnej minucie (przez max 6 h).
+      await admin.from('reminders_sent').delete().eq('record_id', row.id).eq('remind_at', row.remind_at)
+    }
+    sent += n
   }
   return { due: due?.length ?? 0, sent }
 }

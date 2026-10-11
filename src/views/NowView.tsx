@@ -54,7 +54,8 @@ export function NowView() {
   const [shuffling, setShuffling] = useState(false)
 
   const open = useMemo(() => openTasks(tasks), [tasks])
-  const current = open.find((t) => t.id === currentId) ?? null
+  // Szukamy wśród wszystkich nieukończonych — także w Inboxie (przypomnienie mogło dotyczyć wpisu z Inboxu).
+  const current = tasks.find((t) => t.id === currentId && t.status !== 'done' && !t.deleted) ?? null
 
   useEffect(() => writePref('energy', energy), [energy])
   useEffect(() => writePref('minutes', minutes), [minutes])

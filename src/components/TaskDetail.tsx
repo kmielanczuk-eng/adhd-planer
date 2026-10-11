@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTask, useNotes, useTasks } from '../lib/hooks'
 import { openTask, startFocus, toast, useUI } from '../lib/ui'
-import { createNote, updateTask } from '../lib/actions'
+import { createNote, getTask, uncompleteTask, updateTask } from '../lib/actions'
 import { addDays, dayKey, formatMinutes, humanDateTime, humanDay, nextWeekend, today } from '../lib/dates'
 import { completeWithJoy, deleteTaskWithUndo, toggleStepWithJoy } from '../lib/flows'
 import { uid } from '../lib/db'
@@ -94,8 +94,10 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
     setAiMsg(null)
     try {
       const r = await breakDownTask(title, details, task.steps.map((s) => s.title))
-      const steps = [...task.steps, ...r.steps.map((s) => ({ id: uid(), title: `${s.title}`, done: false }))]
-      set({ steps, estimate: task.estimate ?? r.totalMinutes })
+      // Czytamy zadanie na nowo — w czasie zapytania mogły dojść/zmienić się kroki.
+      const cur = (await getTask(task.id)) ?? task
+      const steps = [...cur.steps, ...r.steps.map((s) => ({ id: uid(), title: s.title, done: false }))]
+      set({ steps, estimate: cur.estimate ?? r.totalMinutes })
       setAiMsg(`✨ ${r.tip}`)
     } catch (e) {
       setAiMsg(e instanceof AiError ? e.message : 'Nie udało się. Spróbuj ponownie.')
@@ -113,7 +115,8 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
     setAiMsg(null)
     try {
       const r = await estimateTask(title, details, task.steps.map((s) => s.title))
-      set({ estimate: r.minutes, energy: task.energy ?? r.energy })
+      const cur = (await getTask(task.id)) ?? task
+      set({ estimate: r.minutes, energy: cur.energy ?? r.energy })
       setAiMsg(`⏱️ ok. ${formatMinutes(r.minutes)} — ${r.reason}`)
     } catch (e) {
       setAiMsg(e instanceof AiError ? e.message : 'Nie udało się. Spróbuj ponownie.')
@@ -184,7 +187,7 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
             Zrobione
           </Button>
         ) : (
-          <Button icon="undo" onClick={() => set({ status: 'open', completedAt: null })}>
+          <Button icon="undo" onClick={() => void uncompleteTask(task.id)}>
             Przywróć
           </Button>
         )}
@@ -289,9 +292,17 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
                 type="button"
                 aria-label="Usuń krok"
                 onClick={() => {
-                  const prev = task.steps
+                  const idx = task.steps.findIndex((x) => x.id === s.id)
                   set({ steps: task.steps.filter((x) => x.id !== s.id) })
-                  toast('Usunięto krok', { undo: () => updateTask(task.id, { steps: prev }) })
+                  toast('Usunięto krok', {
+                    undo: async () => {
+                      const cur = await getTask(task.id)
+                      if (!cur || cur.steps.some((x) => x.id === s.id)) return
+                      const steps = [...cur.steps]
+                      steps.splice(Math.min(idx, steps.length), 0, s)
+                      await updateTask(task.id, { steps })
+                    },
+                  })
                 }}
                 className="min-w-10 min-h-10 grid place-items-center rounded-full text-muted opacity-60 sm:opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-peach"
               >

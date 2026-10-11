@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { db, getMeta, onLocalChange, setMeta, table } from './db'
+import { db, getMeta, observeTime, onLocalChange, setMeta, table } from './db'
 import { SYNC_TABLES, type SyncFields, type TableName } from './types'
 
 /** Wiersz w tabeli `records` w Supabase — jedna tabela na wszystkie typy (patrz DECISIONS.md). */
@@ -51,6 +51,7 @@ export async function applyRemote(records: RemoteRecord[]): Promise<number> {
   let changed = 0
   const byTable = new Map<TableName, RemoteRecord[]>()
   for (const r of records) {
+    observeTime(r.updated_at)
     if (!SYNC_TABLES.includes(r.tbl)) continue
     const arr = byTable.get(r.tbl) ?? []
     arr.push(r)
@@ -185,9 +186,10 @@ export class SyncEngine {
     }
     this.running = true
     this.set({ state: 'syncing' })
+    const uid = this.userId
     try {
-      await this.push()
-      const n = await this.pull()
+      await this.push(uid)
+      const n = await this.pull(uid)
       if (n) this.onRemoteChange(n)
       this.set({ state: 'idle', lastSync: Date.now(), error: undefined })
     } catch (e) {
@@ -202,20 +204,20 @@ export class SyncEngine {
     }
   }
 
-  private async push() {
+  private async push(userId: string) {
     const dirty = await collectDirty()
     for (let i = 0; i < dirty.length; i += 200) {
       const batch = dirty.slice(i, i + 200)
       const { error } = await this.client
         .from('records')
-        .upsert(batch.map((r) => ({ ...r, user_id: this.userId })), { onConflict: 'user_id,tbl,id' })
+        .upsert(batch.map((r) => ({ ...r, user_id: userId })), { onConflict: 'user_id,tbl,id' })
       if (error) throw new Error(error.message)
       await markClean(batch)
     }
   }
 
-  private async pull(): Promise<number> {
-    const key = `pullCursor:${this.userId}`
+  private async pull(userId: string): Promise<number> {
+    const key = `pullCursor:${userId}`
     let cursor = await getMeta<string | null>(key, null)
     let total = 0
     for (let page = 0; page < 50; page++) {

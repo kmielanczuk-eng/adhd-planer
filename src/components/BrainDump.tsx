@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { brainDump } from '../lib/actions'
+import { brainDump, revokeLatestXp } from '../lib/actions'
 import { db, now, notifyLocalChange } from '../lib/db'
 import { playSound, vibrate } from '../lib/feedback'
 import { closeDump, pulseXp, toast, useUI } from '../lib/ui'
@@ -48,6 +48,7 @@ export function BrainDump() {
           for (const id of ids) await db.tasks.update(id, { deleted: 1, dirty: 1, updatedAt: now() })
         })
         notifyLocalChange()
+        await revokeLatestXp('dump')
       },
     })
     ref.current?.focus()

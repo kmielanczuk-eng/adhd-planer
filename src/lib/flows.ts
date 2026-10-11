@@ -1,5 +1,5 @@
 import { db } from './db'
-import { completeTask, restoreTask, revokeXp, toggleStep, uncompleteTask, updateTask, awardXp } from './actions'
+import { completeTask, toggleStep, uncompleteTask, updateTask, awardXp } from './actions'
 import { celebrate, playSound, vibrate } from './feedback'
 import { levelInfo, randomCheer, XP_FOR } from './gamification'
 import { pulseXp, showLevelUp, toast } from './ui'
@@ -43,11 +43,8 @@ export async function completeWithJoy(taskId: string, el?: Element | null) {
   pulseXp(XP_FOR.task)
   toast(`${randomCheer()} +${XP_FOR.task} XP`, {
     tone: 'success',
-    undo: async () => {
-      await uncompleteTask(taskId)
-      await restoreTask(res.snapshot)
-      await revokeXp(res.xpId)
-    },
+    // Cofnij zmienia tylko to, co zmieniło ukończenie (status + XP) — nie nadpisuje innych edycji.
+    undo: () => uncompleteTask(taskId),
   })
 }
 
@@ -79,5 +76,5 @@ export async function deleteTaskWithUndo(taskId: string) {
   const t = await db.tasks.get(taskId)
   if (!t) return
   await updateTask(taskId, { deleted: 1 })
-  toast('Usunięto', { undo: () => restoreTask(t) })
+  toast('Usunięto', { undo: () => updateTask(taskId, { deleted: 0 }) })
 }

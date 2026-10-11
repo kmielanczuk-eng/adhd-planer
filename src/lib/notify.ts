@@ -69,8 +69,18 @@ function saveFired(s: Set<string>) {
   }
 }
 
+let checking = false
 export async function checkLocalReminders() {
-  if (!getSettings().localNotifications) return
+  if (!getSettings().localNotifications || checking) return
+  checking = true
+  try {
+    await checkLocalRemindersInner()
+  } finally {
+    checking = false
+  }
+}
+
+async function checkLocalRemindersInner() {
   const nowMs = Date.now()
   const fired = firedSet()
   const due = await db.tasks

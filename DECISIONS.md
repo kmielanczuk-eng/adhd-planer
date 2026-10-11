@@ -16,3 +16,7 @@
 14. **XP nigdy nie spada** (odhaczenie kroku i cofnięcie nie zabiera punktów za krok; cofnięcie ukończenia zadania cofa tylko te 10 XP, bo to była pomyłka). Seria: jeden pusty dzień to automatyczny „dzień wolny 🌙”; dopiero 2 puste dni z rzędu kończą serię — bez komunikatów o porażce.
 15. **Zaległe** nie są czerwone ani nie nazywają się „zaległe”: sekcja „Z poprzednich dni” jest domyślnie zwinięta, z przyciskami „Na dziś / Jutro / Kiedyś”.
 16. **Push na `main` i na gałąź roboczą `claude/youthful-einstein-fq9j8e`** — brief wymaga wdrożeń z `main` (GitHub Pages), środowisko sesji wskazało gałąź roboczą; trzymam je zsynchronizowane.
+17. **Zegar hybrydowy** (`observeTime` w `db.ts`): po odebraniu zmiany z innego urządzenia lokalny zegar „przeskakuje” za nią, więc późniejsza edycja zawsze wygrywa, nawet gdy zegar telefonu się spóźnia.
+18. **Wylogowanie czyści dane z urządzenia** (po dosłaniu zmian i wyłączeniu push) — żeby druga osoba na tym samym urządzeniu nie widziała cudzych zadań. Dane zostają na koncie.
+19. **Cofnij zmienia tylko to, co zmieniła akcja** (np. status), zamiast przywracać całą starą kopię — nie gubi edycji zrobionych w międzyczasie. Odznaczenie zadania/kroku cofa przyznane XP (bez „nabijania” punktów).
+20. **Przypomnienia push**: funkcja SQL `due_reminders()` zwraca tylko niewysłane; gdy wysyłka się nie uda, blokada jest zwalniana i próba wraca co minutę (max 6 h).

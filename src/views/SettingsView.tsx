@@ -171,7 +171,15 @@ function AccountCard() {
             <Button icon="refresh" onClick={syncNow}>
               Synchronizuj teraz
             </Button>
-            <Button variant="ghost" icon="logout" onClick={() => void signOut()}>
+            <Button
+              variant="ghost"
+              icon="logout"
+              onClick={async () => {
+                if (!confirm('Wylogować? Dane zostaną na koncie, a z tego urządzenia zostaną usunięte (wrócą po ponownym zalogowaniu).')) return
+                const ok = await signOut()
+                if (!ok && confirm('Nie udało się wysłać ostatnich zmian (brak sieci?). Wylogować mimo to? Niewysłane zmiany przepadną.')) await signOut(true)
+              }}
+            >
               Wyloguj
             </Button>
           </div>

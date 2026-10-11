@@ -75,6 +75,27 @@ create table if not exists public.reminders_sent (
 alter table public.reminders_sent enable row level security;
 revoke all on public.reminders_sent from anon, authenticated;
 
+-- 3b) Przypomnienia do wysłania: termin minął (max 6 h temu), jeszcze nie wysłane. Wywołuje tylko funkcja Edge (service role).
+create or replace function public.due_reminders(max_rows int default 200)
+returns table (user_id uuid, id text, title text, remind_at text)
+language sql stable security definer set search_path = '' as $$
+  select r.user_id, r.id, r.data ->> 'title', r.data ->> 'remindAt'
+  from public.records r
+  where r.tbl = 'tasks'
+    and not r.deleted
+    and coalesce(r.data ->> 'status', '') <> 'done'
+    and r.data ->> 'remindAt' <= to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+    and r.data ->> 'remindAt' >= to_char((now() - interval '6 hours') at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+    and not exists (
+      select 1 from public.reminders_sent s
+      where s.record_id = r.id and s.remind_at = r.data ->> 'remindAt'
+    )
+  order by r.data ->> 'remindAt'
+  limit max_rows;
+$$;
+revoke execute on function public.due_reminders(int) from public, anon, authenticated;
+grant execute on function public.due_reminders(int) to service_role;
+
 -- 4) Sekrety serwera (klucze VAPID, sekret crona) — RLS bez polityk = niedostępne dla klientów
 create table if not exists public.app_secrets (
   key text primary key,

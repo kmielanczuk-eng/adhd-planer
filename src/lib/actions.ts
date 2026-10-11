@@ -42,6 +42,13 @@ export async function awardXp(reason: XpReason, label: string, amount = XP_FOR[r
   return ev
 }
 
+/** Cofa ostatnie XP za daną akcję (np. odhaczenie i odznaczenie tego samego) — żeby nie dało się „nabijać” punktów. */
+export async function revokeLatestXp(reason: XpReason, label?: string) {
+  const list = await db.xp.where('day').equals(today()).filter((x) => !x.deleted && x.reason === reason && (label == null || x.label === label)).toArray()
+  const last = list.sort((a, b) => b.createdAt - a.createdAt)[0]
+  if (last) await revokeXp(last.id)
+}
+
 export async function revokeXp(id: string | undefined) {
   if (!id) return
   await db.xp.update(id, { deleted: 1, dirty: 1, updatedAt: now() })
@@ -127,7 +134,10 @@ export async function completeTask(id: string): Promise<CompleteResult | undefin
 }
 
 export async function uncompleteTask(id: string) {
+  const t = await db.tasks.get(id)
+  if (!t || t.status !== 'done') return
   await updateTask(id, { status: 'open', completedAt: null })
+  await revokeLatestXp('task', t.title)
 }
 
 export async function toggleStep(taskId: string, stepId: string): Promise<{ done: boolean; xpId?: string } | undefined> {
@@ -140,6 +150,7 @@ export async function toggleStep(taskId: string, stepId: string): Promise<{ done
     const ev = await awardXp('step', step.title)
     return { done: true, xpId: ev.id }
   }
+  await revokeLatestXp('step', step.title)
   return { done: false }
 }
 

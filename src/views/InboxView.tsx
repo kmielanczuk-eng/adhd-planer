@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useTasksLoaded } from '../lib/hooks'
 import { inboxTasks } from '../lib/selectors'
-import { restoreTask, triageToNote, triageToTask, updateTask } from '../lib/actions'
+import { revokeLatestXp, triageToNote, triageToTask, updateTask } from '../lib/actions'
 import { db, now, notifyLocalChange } from '../lib/db'
 import { openDump, openTask, toast } from '../lib/ui'
 import { today } from '../lib/dates'
@@ -74,7 +74,12 @@ async function toTask(task: Task, patch: Partial<Task> = {}) {
   await triageToTask(task.id, patch)
   playSound('step')
   vibrate(10)
-  toast(patch.due ? 'Zadanie na dziś ✔' : 'Przeniesione do zadań', { undo: () => restoreTask(task) })
+  toast(patch.due ? 'Zadanie na dziś ✔' : 'Przeniesione do zadań', {
+    undo: async () => {
+      await updateTask(task.id, { status: 'inbox', due: task.due, pinnedFor: task.pinnedFor })
+      await revokeLatestXp('triage')
+    },
+  })
 }
 
 async function toNote(task: Task) {
@@ -83,7 +88,8 @@ async function toNote(task: Task) {
   toast('Zapisane jako notatka', {
     undo: async () => {
       if (noteId) await db.notes.update(noteId, { deleted: 1, dirty: 1, updatedAt: now() })
-      await restoreTask(task)
+      await updateTask(task.id, { deleted: 0 })
+      await revokeLatestXp('triage')
       notifyLocalChange()
     },
   })
@@ -91,7 +97,7 @@ async function toNote(task: Task) {
 
 async function toTrash(task: Task) {
   await updateTask(task.id, { deleted: 1 })
-  toast('Wyrzucone', { undo: () => restoreTask(task) })
+  toast('Wyrzucone', { undo: () => updateTask(task.id, { deleted: 0 }) })
 }
 
 function InboxCard({ task }: { task: Task }) {

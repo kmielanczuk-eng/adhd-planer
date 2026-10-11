@@ -6,9 +6,10 @@ import { initAccount } from './lib/account'
 import { ensureDopamineDefaults } from './lib/actions'
 import { startLocalReminders } from './lib/notify'
 import { applyTheme, getSettings } from './lib/settings'
+import { initClock } from './lib/db'
 
 applyTheme(getSettings().theme)
-initAccount()
+void initClock().finally(initAccount)
 void ensureDopamineDefaults()
 startLocalReminders()
 

@@ -38,10 +38,24 @@ export function table(name: TableName) {
 
 /** Monotoniczny zegar — dwie zmiany w tej samej ms nadal mają rosnący updatedAt. */
 let lastNow = 0
+/** Zegar hybrydowy: po zobaczeniu zmiany z innego urządzenia nasz następny znacznik jest od niej większy,
+ *  więc lokalna edycja zawsze „wygra” z tym, co właśnie przyszło — nawet gdy zegar urządzenia się spóźnia. */
+export function observeTime(t: number) {
+  if (t > lastNow) lastNow = t
+}
+
 export function now(): number {
   const t = Date.now()
   lastNow = t > lastNow ? t : lastNow + 1
   return lastNow
+}
+
+/** Przy starcie: zegar nie może cofnąć się poniżej najnowszej znanej zmiany (np. po synchronizacji z urządzeniem, którego zegar się spieszy). */
+export async function initClock() {
+  for (const t of [db.tasks, db.notes, db.xp, db.dopamine]) {
+    const last = await (t as unknown as ReturnType<typeof table>).orderBy('updatedAt').last()
+    if (last) observeTime(last.updatedAt)
+  }
 }
 
 export async function getMeta<T>(key: string, fallback: T): Promise<T> {

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
 import { useNotes, useTasks } from '../lib/hooks'
-import { createNote, restoreNote, updateNote } from '../lib/actions'
+import { createNote, updateNote } from '../lib/actions'
 import { navigate, useRoute } from '../lib/router'
 import { plainPreview, renderMarkdown, toggleCheckboxLine } from '../lib/markdown'
 import { humanDay } from '../lib/dates'
@@ -15,7 +15,7 @@ import { Button, Empty, IconButton } from '../components/ui'
 export function NotesView() {
   const route = useRoute()
   const id = route.parts[1]
-  if (id) return <NoteEditor id={id} />
+  if (id) return <NoteEditor key={id} id={id} />
   return <NotesList />
 }
 
@@ -179,7 +179,7 @@ function NoteEditor({ id }: { id: string }) {
               const snap = await db.notes.get(id)
               await updateNote(id, { deleted: 1 })
               navigate('/notatki')
-              if (snap) toast('Notatka usunięta', { undo: () => restoreNote(snap) })
+              if (snap) toast('Notatka usunięta', { undo: () => updateNote(id, { deleted: 0 }) })
             }}
           />
         </div>

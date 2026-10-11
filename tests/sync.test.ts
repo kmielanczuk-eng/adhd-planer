@@ -62,3 +62,12 @@ describe('last-write-wins', () => {
     expect(r.deleted).toBe(false)
   })
 })
+
+describe('zegar hybrydowy', () => {
+  it('lokalna edycja po odebraniu zmiany „z przyszłości” dostaje większy znacznik', async () => {
+    const { now } = await import('../src/lib/db')
+    const future = Date.now() + 3_600_000
+    await applyRemote([remote('fut', future, 'z przyszłości')])
+    expect(now()).toBeGreaterThan(future)
+  })
+})

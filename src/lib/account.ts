@@ -1,7 +1,9 @@
 import { useSyncExternalStore } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { getSupabase, redirectUrl } from './supabase'
-import { SyncEngine, type SyncStatus } from './sync'
+import { SyncEngine, collectDirty, type SyncStatus } from './sync'
+import { db } from './db'
+import { ensureDopamineDefaults } from './actions'
 
 interface AccountState {
   user: User | null
@@ -71,9 +73,31 @@ export async function verifyCode(email: string, token: string) {
   if (error) throw new Error(translateAuthError(error.message))
 }
 
-export async function signOut() {
+/**
+ * Wylogowanie: najpierw dosyłamy niewysłane zmiany, wyłączamy push na tym urządzeniu,
+ * potem czyścimy lokalne dane — żeby kolejna osoba na tym urządzeniu nie widziała cudzych zadań.
+ * Zwraca false (i nic nie usuwa), gdy są niewysłane zmiany, a serwer jest nieosiągalny.
+ */
+export async function signOut(force = false): Promise<boolean> {
   const sb = getSupabase()
-  await sb?.auth.signOut()
+  if (!sb) return true
+  if (engine && state.user) {
+    await engine.run()
+    const pending = await collectDirty()
+    if (pending.length && !force) return false
+  }
+  try {
+    const { disablePush } = await import('./notify')
+    await disablePush()
+  } catch {
+    /* brak push — ok */
+  }
+  await sb.auth.signOut()
+  await db.transaction('rw', [db.tasks, db.notes, db.xp, db.dopamine, db.meta], async () => {
+    await Promise.all([db.tasks.clear(), db.notes.clear(), db.xp.clear(), db.dopamine.clear(), db.meta.clear()])
+  })
+  await ensureDopamineDefaults()
+  return true
 }
 
 function translateAuthError(msg: string): string {

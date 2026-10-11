@@ -47,3 +47,17 @@ describe('markdown', () => {
     expect(toggleCheckboxLine('- [x] b', 0)).toBe('- [ ] b')
   })
 })
+
+describe('XP bez nabijania', () => {
+  it('odznaczenie ukończonego zadania cofa XP', async () => {
+    const { completeTask, uncompleteTask } = await import('../src/lib/actions')
+    const t = await createTask({ title: 'XP test' })
+    await completeTask(t.id)
+    const sum = async () => (await db.xp.toArray()).filter((x) => !x.deleted).reduce((a, x) => a + x.amount, 0)
+    expect(await sum()).toBe(10)
+    await uncompleteTask(t.id)
+    expect(await sum()).toBe(0)
+    await completeTask(t.id)
+    expect(await sum()).toBe(10)
+  })
+})

@@ -124,7 +124,11 @@ function TaskDetail({ task, onClose }: { task: Task; onClose: () => void }) {
 
   const setReminder = (d: Date | null) => {
     set({ remindAt: d ? d.toISOString() : null })
-    if (d) toast(`Przypomnę: ${humanDateTime(d.toISOString())}`, { tone: 'info' })
+    if (d) {
+      toast(`Przypomnę: ${humanDateTime(d.toISOString())}`, { tone: 'info' })
+      // Poproś o zgodę na powiadomienia w momencie, gdy ma to sens (a nie na starcie apki).
+      if ('Notification' in window && Notification.permission === 'default') void Notification.requestPermission()
+    }
   }
 
   const reminderPresets = () => {

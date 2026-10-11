@@ -46,6 +46,17 @@ export function TodayView() {
         )}
       </header>
 
+      {new Date().getHours() >= 18 && v.doneToday.length + xp.filter((x) => x.day === td && x.reason === 'step').length > 0 && (
+        <button
+          type="button"
+          onClick={() => navigate('/postepy')}
+          className="w-full mb-5 flex items-center justify-between gap-3 rounded-2xl bg-sun-soft px-4 min-h-14 text-left"
+        >
+          <span className="flex items-center gap-2">🫙 Zamknij dzień — zobacz, co się udało</span>
+          <Icon name="chevronRight" size={18} />
+        </button>
+      )}
+
       {inboxCount > 0 && (
         <button
           type="button"

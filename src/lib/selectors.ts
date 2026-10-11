@@ -146,7 +146,7 @@ export function scoreTask(t: Task, o: PickOptions): number {
   if (t.pinnedFor === o.todayKey) score += 30
   if (t.due) {
     const d = diffDays(t.due, o.todayKey)
-    if (d <= 0) score += 20 + Math.min(10, -d)
+    if (d <= 0) score += 15 + Math.min(5, -d)
     else if (d <= 2) score += 10 - d * 3
   }
   // Zaczęte zadania (z odhaczonymi krokami) łatwiej dokończyć.

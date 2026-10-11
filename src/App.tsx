@@ -319,7 +319,7 @@ function Fab() {
 function Toasts() {
   const toasts = useUI((s) => s.toasts)
   return (
-    <div className="fixed z-[80] inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] lg:bottom-6 flex flex-col items-center gap-2 px-4 pointer-events-none" aria-live="polite">
+    <div className="fixed z-[80] inset-x-0 bottom-[calc(10rem+env(safe-area-inset-bottom))] lg:bottom-6 flex flex-col items-center gap-2 px-4 pointer-events-none" aria-live="polite">
       {toasts.map((t) => (
         <div
           key={t.id}

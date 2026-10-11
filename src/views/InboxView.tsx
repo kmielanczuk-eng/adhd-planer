@@ -156,7 +156,7 @@ function InboxCard({ task }: { task: Task }) {
         <button type="button" className="block w-full text-left leading-snug break-words min-h-8" onClick={() => openTask(task.id)}>
           {task.title}
         </button>
-        <div className="flex flex-wrap gap-1.5 mt-3">
+        <div className="grid grid-cols-4 gap-1.5 mt-3">
           <TriageBtn icon="check" label="Zadanie" tone="accent" onClick={() => void toTask(task)} testid="triage-task" />
           <TriageBtn icon="star" label="Na dziś" tone="sun" onClick={() => void toTask(task, { due: today(), pinnedFor: null })} testid="triage-today" />
           <TriageBtn icon="note" label="Notatka" tone="lav" onClick={() => void toNote(task)} testid="triage-note" />
@@ -170,8 +170,8 @@ function InboxCard({ task }: { task: Task }) {
 function TriageBtn({ icon, label, tone, onClick, testid }: { icon: Parameters<typeof Icon>[0]['name']; label: string; tone: 'accent' | 'sun' | 'lav' | 'peach'; onClick: () => void; testid: string }) {
   const t = { accent: 'bg-accent-soft text-accent', sun: 'bg-sun-soft text-sun', lav: 'bg-lav-soft text-lav', peach: 'bg-peach-soft text-peach' }[tone]
   return (
-    <button type="button" onClick={onClick} data-testid={testid} className={`inline-flex items-center gap-1.5 rounded-xl px-3 min-h-10 text-sm font-medium active:scale-95 transition ${t}`}>
-      <Icon name={icon} size={15} /> {label}
+    <button type="button" onClick={onClick} data-testid={testid} className={`flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 rounded-xl px-1 py-1.5 min-h-12 sm:min-h-10 text-xs sm:text-sm font-medium active:scale-95 transition ${t}`}>
+      <Icon name={icon} size={17} /> {label}
     </button>
   )
 }

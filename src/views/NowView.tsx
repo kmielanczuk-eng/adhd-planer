@@ -163,7 +163,8 @@ function CurrentCard({
 }) {
   const step = nextStep(task)
   const est = remainingEstimate(task)
-  const sessionMin = Math.min(minutes ?? focusMinutes, est ?? focusMinutes) || focusMinutes
+  // Sesja timera: tyle, ile masz czasu (lub zadanie potrzebuje), ale nie krócej niż 10 min — 5 min to przycisk „Zacznij”.
+  const sessionMin = Math.max(10, Math.min(minutes ?? focusMinutes, est ?? focusMinutes))
   return (
     <div className={`rounded-3xl bg-surface border-2 border-accent/30 shadow-sm p-5 sm:p-6 ${shuffling ? 'anim-pop' : ''}`} data-testid="now-card">
       <div className="flex items-start justify-between gap-2">

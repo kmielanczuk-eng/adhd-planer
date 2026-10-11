@@ -66,9 +66,9 @@ export function Chip({
 }) {
   const on = {
     accent: 'bg-accent text-accent-ink border-accent',
-    lav: 'bg-lav text-white dark:text-black border-lav',
-    sun: 'bg-sun text-white dark:text-black border-sun',
-    peach: 'bg-peach text-white dark:text-black border-peach',
+    lav: 'bg-lav-soft text-ink border-lav ring-1 ring-lav',
+    sun: 'bg-sun-soft text-ink border-sun ring-1 ring-sun',
+    peach: 'bg-peach-soft text-ink border-peach ring-1 ring-peach',
   }[tone]
   return (
     <button

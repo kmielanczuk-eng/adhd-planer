@@ -7,7 +7,7 @@ import { uncompleteTask } from '../lib/actions'
 import { Icon } from './Icon'
 import { Badge } from './ui'
 
-export const ENERGY_LABEL = { low: 'Mało energii', medium: 'Średnio energii', high: 'Dużo energii' } as const
+export const ENERGY_LABEL = { low: 'Niska', medium: 'Średnia', high: 'Wysoka' } as const
 export const ENERGY_SHORT = { low: 'niska', medium: 'średnia', high: 'wysoka' } as const
 export const ENERGY_EMOJI = { low: '🪫', medium: '🔋', high: '⚡' } as const
 

@@ -50,8 +50,8 @@ export function useUI<T>(sel: (s: UIState) => T): T {
 let toastSeq = 1
 export function toast(text: string, opts: Omit<Toast, 'id' | 'text'> = {}) {
   const t: Toast = { id: toastSeq++, text, duration: opts.undo ? 6000 : 3000, ...opts }
-  // Maks. 2 naraz — bez zalewania ekranu.
-  set({ toasts: [...state.toasts.slice(-1), t] })
+  // Jeden dymek naraz — „Cofnij” zawsze dotyczy ostatniej akcji, bez zalewania ekranu.
+  set({ toasts: [t] })
   setTimeout(() => dismissToast(t.id), t.duration)
   return t.id
 }
